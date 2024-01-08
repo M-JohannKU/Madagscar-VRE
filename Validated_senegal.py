@@ -730,7 +730,7 @@ for m in range(12):
     # Adding labels and title for the current subplot
     axs[row, col].set_xlabel('Hours')
     axs[row, col].set_ylabel('CF')
-    axs[row, col].set_title(f'Month {m+1}')
+    axs[row, col].set_title(months[m])
     
     # Set axis limits for the current subplot
     axs[row, col].set_xlim(0, 24)
@@ -739,8 +739,8 @@ for m in range(12):
     
 # Add a common legend for all subplots
 handles, labels = axs[0, 0].get_legend_handles_labels()
-fig.legend(handles, labels, loc='upper right')
-
+fig.legend(handles, labels, loc='lower center', bbox_to_anchor=(0.5, -0.15), ncol=2)  # Adjust the parameters as needed
+fig.suptitle('Daily wind and solar capacity factors 2018 ', fontsize=16)
 # Adjust spacing between subplots
 plt.tight_layout()
 
@@ -803,3 +803,66 @@ plt.show()
 # plt.legend()
 # #plt.save('Monthly Capacity Factor')
 # plt.show()
+
+
+# Create a single figure with 12 subplots arranged in a 3x4 grid
+fig, axs = plt.subplots(2, 6, figsize=(20, 6))
+
+q75_wind = np.zeros(shape = (len(months_num), len(hour)))
+q25_wind = np.zeros(shape = (len(months_num), len(hour)))
+q75_solar = np.zeros(shape = (len(months_num), len(hour)))
+q25_solar = np.zeros(shape = (len(months_num), len(hour)))
+
+ 
+# Loop through the months to create subplots
+for m in range(12):
+    row = m // 6  # Calculate the row index
+    col = m % 6  # Calculate the column index
+    
+    q75_wind[m,:], q25_wind[m,:] = np.percentile(bymonth_loc_output_wind[m,:,0:days[m]],[75,25],axis=1)
+
+    q75_solar[m,:], q25_solar[m,:] = np.percentile(bymonth_loc_output_solar[m,:,0:days[m]],[75,25],axis=1)
+    
+    # Plot the smoothed line with colored lines
+    axs[row, col].plot(hour, av_output_wind_hr[m, :], color='blue', label='Wind', linewidth=2)
+    axs[row, col].plot(hour, av_output_solar_hr[m,:], color='yellow', label='Solar', linewidth=2)
+    
+    #plot the IQR Range as shaded area for both wind and solar
+    axs[row, col].fill_between(hour, q25_wind[m,:], q75_wind[m,:], alpha=0.3, color='blue', label='Wind IQR Range')
+    axs[row, col].fill_between(hour, q25_solar[m,:], q75_solar[m,:], alpha=0.3, color = 'yellow', label='Solar IQR Range')#, linestyle='dashed')
+    
+    
+    # Adding labels and title for the current subplot
+    axs[row, col].set_xlabel('Hours')
+    axs[row, col].set_ylabel('CF')
+    axs[row, col].set_title(months[m])
+    
+    # Set axis limits for the current subplot
+    axs[row, col].set_xlim(1, 24)
+    axs[row, col].set_ylim(0, 1)
+    axs[row,col].set_yticks([0,0.5,1])
+    axs[row,col].set_xticks([1,12,24])
+    
+# Add a common legend for all subplots
+
+# Hide y-axis labels on all subplots except the leftmost column
+    if col > 0:
+        axs[row, col].tick_params(axis='y', labelleft=False)
+
+# Add a common legend for all subplots below the graphs
+handles, labels = axs[0, 0].get_legend_handles_labels()
+fig.legend(handles, labels, loc='lower center', bbox_to_anchor=(0.5, -0.15), ncol=2, mode='expand', fontsize = 'large')  # Adjust the parameters as needed
+
+
+# handles, labels = axs[0, 0].get_legend_handles_labels()
+# fig.legend(handles, labels, loc='lower center', bbox_to_anchor=(0.5, -0.15), ncol=2)  # Adjust the parameters as needed
+fig.suptitle('Daily wind and solar capacity factors 2018 ', fontsize=16)
+# Adjust spacing between subplots
+plt.tight_layout()
+
+#saving figure 
+plt.savefig('Fig for appendix comparison', dpi=300, bbox_inches='tight')
+
+# Show the figure with all subplots
+plt.show()
+
